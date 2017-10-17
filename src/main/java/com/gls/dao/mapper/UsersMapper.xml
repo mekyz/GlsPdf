@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gls.dao.mapper.UsersMapper">
+
+	<resultMap id="usersResultMap" type="com.gls.pojo.Users">
+		<id property="userId" column="user_id"/>
+		<result property="custId" column="cust_id"/>
+		<result property="level" column="level"/>
+		<result property="userName" column="user_name"/>
+		<result property="screenName" column="screen_name"/>
+		<result property="province" column="province"/>
+		<result property="city" column="city"/>
+		<result property="district" column="district"/>
+		<result property="birthYear" column="birth_year"/>
+		<result property="birthMonth" column="birth_month"/>
+		<result property="birthDay" column="birth_day"/>
+		<result property="addresss" column="addresss"/>
+		<result property="mobilephone" column="mobilephone"/>
+		<result property="telephone" column="telephone"/>
+		<result property="gender" column="gender"/>
+		<result property="profileImageUrl" column="profile_image_url"/>
+		<result property="onlineStatus" column="online_status"/>
+		<result property="onlineTime" column="online_time"/>
+		<result property="description" column="description"/>
+		<result property="email" column="email"/>
+		<result property="passwd" column="passwd"/>
+		<result property="company" column="company"/>
+		<result property="tokenContent" column="token_content"/>
+		<result property="deviceId" column="device_id"/>
+		<result property="addressId" column="address_id"/>
+		<result property="createTime" column="create_time"/>
+		<result property="updateTime" column="update_time"/>
+		<result property="isDeleted" column="is_deleted"/>
+		<result property="openId" column="open_id"/>
+		
+		
+	</resultMap>
+	<resultMap id="usersNewResultMap" type="com.gls.pojo.Users">
+		<id property="userId" column="user_id"/>
+		<result property="userName" column="user_name"/>
+		<result property="screenName" column="screen_name"/>
+		<result property="mobilephone" column="mobilephone"/>
+		<result property="email" column="email"/>
+		<result property="passwd" column="passwd"/>
+		<result property="company" column="company"/>
+		<result property="position" column="position"/>
+		<result property="cDate" column="cDate"/>
+		<result property="isDeleted" column="is_deleted"/>
+		<result property="apply_status" column="apply_status"/>
+	</resultMap>
+	
+	<select id="varidateUserPsword" resultType="int">
+		select count(1) from users where user_name = #{userName} and passwd = #{passwd}
+	</select>
+	
+	<select id="seleUser4Phone" resultMap="usersResultMap">
+		select user_id, user_name, 
+			profile_image_url, mobilephone, 
+			platform_id, device_id,open_id ,apply_status
+			from users 
+			where user_name = #{userName} and passwd = #{passwd}
+			order by create_time desc
+	</select>
+	<!-- 注册 -->
+	<insert id="insertUser"  parameterType="com.gls.pojo.Users" useGeneratedKeys="true" keyProperty="userId" >
+		 INSERT INTO users 
+			(user_name, screen_name,mobilephone, email, passwd, company, position,create_time) 
+		 VALUES 
+			(#{userName}, #{screenName}, #{mobilephone},
+			 #{email},#{passwd},#{company},#{position},
+			 NOW())
+	</insert>
+	<!-- 检查用户名是否存在 -->
+	<select id="checkUserName" resultType="int">
+		select count(1) from users where user_name = #{userName} 
+	</select>
+	<!-- 用户列表 -->
+	<select id="getUserList" resultMap="usersNewResultMap" parameterType="com.gls.pojo.Users">
+		select 
+		user_id,user_name, screen_name,mobilephone, email, company, position, DATE_FORMAT(create_time ,'%Y-%m-%d')  cDate,apply_status
+		 from users  order by user_id desc 
+		 <if test="currentPage!=null" >
+		  LIMIT #{currentPage},#{number}
+		  </if>
+	</select>
+	<!-- 用户列表 -->
+	<select id="getUserById" resultMap="usersNewResultMap" parameterType="com.gls.pojo.Users">
+		select 
+		user_id,user_name, screen_name,mobilephone, email, passwd, company, position, DATE_FORMAT(create_time ,'%Y-%m-%d')  cDate,apply_status
+		 from users where user_id = #{userId}
+	</select>
+	<!-- 统计用户数  分页用-->
+	<select id="getUserCount" resultType="int">
+		select count(1) from users  
+	</select>
+	<!-- 审核 用户的权限 -->
+	<update id="setUserStart" parameterType="com.gls.pojo.Users"  >
+	   UPDATE users SET apply_status=#{apply_status} where user_id=#{userId}
+	</update>
+	<!-- 检验用户userId(userId)是否存在用户账户 user_account -->
+	<select id="checkAccount" resultType="int" parameterType="com.gls.pojo.UserAccount" >
+		select count(1) from user_account where user_id= #{userId} 
+	</select>
+	<!-- 插入 用户账户 表 -->
+	<insert id="insertAccount"  parameterType="com.gls.pojo.UserAccount" useGeneratedKeys="true" keyProperty="userId" >
+		 INSERT INTO user_account 
+			(user_id, all_points,free_points, pay_points,create_time) 
+		 VALUES 
+			(#{userId}, #{all_points}, #{free_points},
+			 #{pay_points},NOW())
+	</insert>
+	<!-- 修改用户账户 -->
+	<update id="setAccount" parameterType="com.gls.pojo.UserAccount"   >
+	   UPDATE user_account 
+	   <set>
+	     <if test="all_points!=null" >
+		  all_points=#{all_points},
+		 </if>
+		 <if test="free_points!=null" >
+		  free_points=#{free_points},
+		 </if>
+		 <if test="pay_points!=null" >
+		  pay_points=#{pay_points},
+		 </if>
+		 </set>
+	    where user_id=#{userId}
+	</update>
+	<!-- 查询用户账户 byUserId-->
+	<select id="findAccountByUserId" parameterType="com.gls.pojo.UserAccount" resultType="com.gls.pojo.UserAccount" >
+		select 
+		ua.user_id userId , ua.all_points all_points,ua.free_points free_points,ua.pay_points pay_points
+		 from 
+		 user_account ua where ua.user_id=#{userId}
+	</select>
+	<!-- 插入 积分 账单记录 -->
+	<insert id="insertUserBill"  parameterType="com.gls.pojo.UserBill" useGeneratedKeys="true" keyProperty="userId" >
+		 INSERT INTO user_bill 
+			(user_id, title,type,detail_id,points,create_time) 
+		 VALUES 
+			(#{userId}, #{title}, #{type}, #{detailId}, #{points},NOW())
+	</insert>
+	<!-- 获取    积分 账单记录  -->
+	<select id="getUserBillList" resultType="com.gls.pojo.UserBill" parameterType="com.gls.pojo.UserBill">
+		select 
+		   DATE_FORMAT(create_time ,'%Y-%m-%d %H:%i:%s')  cDate,title, points
+		 from 
+		   user_bill  
+		 where user_id=#{userId}
+		   order by id desc 
+		 <if test="currentPage!=null" >
+		  LIMIT #{currentPage},#{number}
+		  </if>
+	</select>
+	<!-- 获取    积分 账单记录 判断扣钱用  -->
+	<select id="getDetaukIdBillList" resultType="com.gls.pojo.UserBill" parameterType="com.gls.pojo.UserBill">
+		select 
+		  detail_id, DATE_FORMAT(create_time ,'%Y-%m-%d %H:%i:%s')  cDate,title, points
+		 from 
+		   user_bill  
+		 where
+		 <if test="userId!=null and userId!='' ">     
+            user_id=#{userId}      
+        </if> 
+         <if test="detailId!=null and detailId!='' ">     
+           and  detail_id=#{detailId}      
+        </if>
+        <if test="type!=null and type!='' ">     
+           and  type=#{type}      
+        </if> 
+		 
+		  
+	</select>
+	
+	<!--统计积分 账单记录  总数  分页用-->
+	<select id="getUserBillListCount" resultType="int">
+		select count(1) from user_bill  where user_id=#{userId}
+	</select>
+	<!-- 插入 订单 -->
+	<insert id="insertOrders"  parameterType="com.gls.pojo.Orders" useGeneratedKeys="true" keyProperty="order_id" >
+		 INSERT INTO orders 
+			(order_sn, user_id,title, points, all_price, order_type,create_time) 
+		 VALUES 
+			(#{order_sn}, #{userId}, #{title},
+			 #{points},#{all_price},#{order_type},
+			 NOW())
+	</insert>
+	<!-- 插入 用户查询日志 -->
+	<insert id="insertUserSearchLog"  parameterType="com.gls.pojo.UserSearchLog"  >
+		 INSERT INTO user_search_log
+		  (user_id,content,type) 
+		 VALUES 
+			(#{userId}, #{content}, #{type})
+	</insert>
+	<!-- 查询用户查询日志 -->
+	<select id="getSearchLogListByUserId" parameterType="com.gls.pojo.UserSearchLog" resultType="com.gls.pojo.UserSearchLog" >
+		SELECT distinct content from user_search_log where user_id=#{userId} and type=#{type} ORDER BY id DESC  LIMIT 0,10
+	</select>
+
+	<!--查询订单-->
+	<select id="getOrder" parameterType="com.gls.pojo.Orders" resultType="com.gls.pojo.Orders">
+        SELECT * FROM orders WHERE order_sn=#{order_sn}
+    </select>
+</mapper>

@@ -1,0 +1,697 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+	<mapper namespace="com.gls.dao.mapper.HomeMapper">
+	
+<!-- 		<cache eviction="FIFO" flushInterval="3000000" size="10240000" readOnly="true"  type="com.gls.util.redisUtil.RedisCache"/>   -->
+		<cache eviction="FIFO" flushInterval="30000000" size="10240000" readOnly="true"/>  
+	
+	<!-- 获取所有行业数据 -->
+	<select id="getAllCategoryLevel1" resultType="com.gls.pojo.ProductCategory">
+		select cid,cname title,cname_en cnameEn,level,pid  from category_new where  <![CDATA[  level =1  ]]>  order by cid Desc
+	</select>
+	<!--其他级别  -->
+	<select id="getAllCategoryLevel2" parameterType="Integer" resultType="com.gls.pojo.ProductCategory">
+		select cid,cname title,cname_en cnameEn,level,pid from category_new  where pid =#{cid}
+	</select>
+	
+	<select id="getCategoryLevelId1" parameterType="com.gls.pojo.ProductParam" resultType="Integer">
+		select category_level1_id from product_new  where id =#{cid}
+	</select>
+	
+	<select id="getDistrictById" resultType="com.gls.pojo.District">
+		select did,dname,dname_en dnameEn,level from district  where did =#{did}
+	</select>
+	
+	<select id="getComListByDid" resultType="com.gls.pojo.TransactionDetailed">
+		select b.id,b.origin_name name,b.total_count count,b.total_volume totalVolume,b.total_weight totalWeight,
+			b.last_date latelyDate,b.last_product_desc productName
+		<if test="ietype == 0">
+			 from businesses_new b 
+		</if>
+		<if test="ietype == 1">
+			 from suppliers_new b 
+		</if>
+		<if test="dlevel == 2">
+			 where b.did_level2 = #{did}
+		</if>
+		<if test="dlevel == 3">
+			 where b.did_level3 = #{did}
+		</if>
+		order by b.total_count desc
+		<!--limit #{pageNo},#{pageSize}-->
+	</select>
+	<select id="getComDetailListById" resultType="com.gls.pojo.TransactionDetailed">
+		<if test="ietype == 0">
+			select b.origin_name name,count(1) count,sum(t.fact_weight) totalWeight,
+			sum(t.total_volume) totalVolume,t.frankly_time latelyDate,t.product_description productName,b.dname_level1 dname
+			from  frankly_oredr_new t 
+			left join suppliers_new b on t.suppliers_id = b.id
+			where t.businesses_id = #{id} group by t.suppliers_name 
+			order by count(1) desc
+			limit #{pageNo},#{pageSize}
+		</if>
+		<if test="ietype == 1">
+			select b.origin_name name,count(1) count,sum(t.fact_weight) totalWeight,
+			sum(t.total_volume) totalVolume,t.frankly_time latelyDate,t.product_description productName,b.dname_level1 dname
+			from  frankly_oredr_new t 
+			left join businesses_new b on t.businesses_id = b.id
+			where t.suppliers_id = #{id} group by t.businesses_name 
+			order by count(1) desc
+			limit #{pageNo},#{pageSize}
+		</if>
+	</select>
+	
+	<!-- TOP10进（出）口行业排名 -->  
+	<select id="getIndustryTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryTop10Entity" useCache="true">
+	
+		SELECT
+			cat.cid cid,
+			cat.cname_en cnameEn,
+			<if test="ietype == 0">
+				 <if test="vwtype == 0">
+				 	SUM(sdc.imp_total_volume) value
+				 </if>
+				 <if test="vwtype == 1">
+				 	SUM(sdc.imp_total_weight) value
+				 </if>
+			</if>
+			<if test="ietype == 1">
+				<if test="vwtype == 0">
+				 	SUM(sdc.exp_total_volume) value
+				 </if>
+				 <if test="vwtype == 1">
+				 	SUM(sdc.exp_total_weight) value
+				 </if>
+			</if>
+		FROM
+			category_new cat
+		LEFT JOIN statis_dis_cate_month sdc ON cat.cid = sdc.cid
+		LEFT JOIN district dis ON sdc.did = dis.did
+		WHERE 1=1 
+		<if test="date_type != 0">
+			<if test="date_type == 1">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 2">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 3">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+			</if>
+		</if>
+		<if test="dlevel == 0">
+			 AND dis.level=1
+		</if>
+		<if test="dlevel != 0">
+			<if test="dlevel == 1">
+				AND dis.did = #{did} AND dis.level=1
+			</if>
+			<if test="dlevel == 2">
+				AND dis.did = #{did} AND dis.level=2
+			</if>
+			<if test="dlevel == 3">
+				AND dis.did = #{did} AND dis.level=3
+			</if>
+		</if>
+		GROUP BY cid
+		ORDER BY value DESC  LIMIT 10;
+
+	</select>
+	
+	<!-- 某个行业下top10进口/出口产品排名 -->
+	<select id="getIndustryProductTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryProductEntity" useCache="true">
+	
+		SELECT
+			pn.id pid,
+			pn.name pname,
+			<if test="ietype == 0">
+				<if test="vwtype == 0">
+					SUM(sdc.imp_total_volume) value
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdc.imp_total_weight) value
+				</if>
+			</if>
+			<if test="ietype == 1">
+				<if test="vwtype == 0">
+					SUM(sdc.exp_total_volume) value
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdc.exp_total_weight) value
+				</if>
+			</if>
+		FROM 
+			product_new pn 
+		LEFT JOIN statis_dis_product_month sdc ON sdc.pid=pn.id
+		LEFT JOIN district dis ON sdc.did = dis.did
+		where sdc.cid = #{cid}
+		<if test="date_type != 0">
+			<if test="date_type == 1">
+				AND sdc.cid=1 AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 2"> 
+				AND sdc.cid=1 AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 3">
+				AND sdc.cid=1 AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+			</if>
+		</if>
+		<if test="dlevel == 0">
+			 AND dis.level=1
+		</if>
+		<if test="dlevel != 0">
+			<if test="dlevel == 1">
+				AND dis.did = #{did} AND dis.level=1
+			</if>
+			<if test="dlevel == 2">
+				AND dis.did = #{did} AND dis.level=2
+			</if>
+			<if test="dlevel == 3">
+				AND dis.did = #{did} AND dis.level=3
+			</if>
+		</if>
+		GROUP BY pid
+		ORDER BY value DESC LIMIT 10;
+	
+		</select>
+		
+		
+		<!-- 行业出口国占比饼图 -->
+		<select id="getIndustryAreaTop10" parameterType="com.gls.pojo.ProductParam"  resultType="com.gls.pojo.IndustryAreaTop10Entity" useCache="true">
+		
+			SELECT
+				dis.did did,
+				dis.dname_en dnameEn,
+				<if test="ietype == 0">
+					<if test="vwtype == 0">
+						SUM(sdc.imp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.imp_total_weight) value
+					</if>
+				</if>
+				<if test="ietype == 1">
+					<if test="vwtype == 0">
+						SUM(sdc.exp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.exp_total_weight) value
+					</if>
+				</if>
+			FROM
+				statis_dis_cate_month sdc
+			LEFT JOIN district dis ON sdc.did = dis.did				
+			WHERE sdc.cid = #{cid}
+			<if test="did == 0">
+				AND dis.level = 1
+			</if>
+			<if test="did != 0">
+				<if test="dlevel == 1">
+					AND dis.level = 2 AND dis.pid=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND dis.level = 3 AND dis.pid=#{did}
+				</if>
+			</if>
+			<if test="date_type != 0">
+				<if test="date_type == 1">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')					
+				</if>
+				<if test="date_type == 2">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+				</if>
+				<if test="date_type == 3">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+				</if>
+			</if>
+			GROUP BY dis.did
+			ORDER BY value DESC LIMIT 10;
+
+		</select>
+		
+		<!--产品出口国占饼图  -->
+		<select id="getIndustryProductAreaTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryAreaTop10Entity" useCache="true">
+		
+			SELECT
+				dis.did did,
+				dis.dname_en dnameEn,
+				<if test="ietype == 0">
+					<if test="vwtype == 0">
+						SUM(sdc.imp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.imp_total_weight) value
+					</if>
+				</if>
+				<if test="ietype == 1">
+					<if test="vwtype == 0">
+						SUM(sdc.exp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.exp_total_weight) value
+					</if>
+				</if>
+			FROM
+				statis_dis_product_month sdc
+			LEFT JOIN district dis ON sdc.did = dis.did				
+			WHERE sdc.pid = #{pid}
+			<if test="did == 0">
+				AND dis.level = 1
+			</if>
+			<if test="did != 0">
+				<if test="dlevel == 1">
+					AND dis.level = 2 AND dis.pid=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND dis.level = 3 AND dis.pid=#{did}
+				</if>
+			</if>
+			<if test="date_type != 0">
+				<if test="date_type == 1">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')					
+				</if>
+				<if test="date_type == 2">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+				</if>
+				<if test="date_type == 3">
+					AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+				</if>
+			</if>
+			GROUP BY dis.did
+			ORDER BY value DESC LIMIT 10;
+		
+		</select>
+		
+		<!--行业供应商/采购商 地区分布 占比饼图  -->
+		<select id="getIndustrySupplierTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustrySupplierTop10" useCache="true">
+		
+			SELECT
+				dis.did,
+				dis.dname_en,
+				<if test="ietype == 0">
+					SUM(sdc.busi_count) value			
+				</if>
+				<if test="ietype == 1">
+					SUM(sdc.supp_count) value
+				</if>
+			FROM statis_dis_cate sdc
+			LEFT JOIN district dis ON dis.did =sdc.did
+			WHERE sdc.cid = #{cid}
+			<if test="did == 0">
+				AND dis.level = 1
+			</if>
+			<if test="did != 0">
+					<if test="dlevel == 1">
+						AND dis.level = 2 AND dis.pid=#{did}
+					</if>
+					<if test="dlevel == 2">
+						AND dis.level = 3 AND dis.pid=#{did}
+					</if>
+				</if>
+			GROUP BY dis.did
+			ORDER BY value DESC LIMIT 10;
+		
+		</select>
+		
+		<!-- 获取商户数量 -->
+		<select id="getTenantsAmount" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.TenantsAmount" useCache="true">
+			
+			SELECT
+				COUNT(1) tenantsAmount
+			FROM
+				<if test="ietype == 0">
+					businesses_new bn
+				</if>
+				<if test="ietype == 1">
+					suppliers_new bn
+				</if>
+			WHERE 1=1
+				<if test="did != 0">
+					<if test="dlevel == 1">
+						 AND bn.did_level1 = #{did}
+					</if>
+					<if test="dlevel == 2">
+						AND bn.did_level2 = #{did}
+					</if>
+					<if test="dlevel == 3">
+						AND bn.did_level3 = #{did}
+					</if>
+				</if>
+		</select>
+		
+		<!-- 获取总的进出口柜量/重量 -->
+		<select id="getValueAmount" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryTop10Entity" useCache="true">
+
+			SELECT
+				<if test="ietype == 0">
+					<if test="vwtype == 0">
+						SUM(sdc.imp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.imp_total_weight) value
+					</if>
+				</if>
+				<if test="ietype == 1">
+					<if test="vwtype == 0">
+						SUM(sdc.exp_total_volume) value
+					</if>
+					<if test="vwtype == 1">
+						SUM(sdc.exp_total_weight)
+					</if>
+				</if>
+			FROM 
+				statis_dis_cate sdc
+			LEFT JOIN district dis ON sdc.did=dis.did
+			WHERE 1=1
+			<if test="dlevel == 0">
+				AND dis.level = 1 
+			</if>
+			<if test="dlevel != 0">
+				<if test="dlevel == 1">
+					AND dis.level = 1 AND dis.did = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND dis.level = 2 AND dis.did = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND dis.level = 3 AND dis.did = #{did}
+				</if>
+			</if>
+		</select> 
+		
+		<!--地区出口/进口占比图  -->
+		<select id="getTurnoverDistributed" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryAreaEntity" useCache="false">
+
+			SELECT
+				dis.did,
+				dis.dname_en,
+				<if test="ietype == 0">
+					<if test="vwtype == 0">
+						SUM(sdc.imp_total_volume) value 
+					</if>
+					<if test="vwtype == 1"> 
+						SUM(sdc.imp_total_weight) value
+					</if>
+				</if>
+				<if test="ietype == 1">
+					<if test="vwtype == 0">
+						SUM(sdc.exp_total_volume) value
+					</if>
+					<if test="vwtype == 1"> 
+						SUM(sdc.exp_total_weight) value
+					</if>
+				</if>
+			FROM
+				statis_dis_cate_month sdc
+				LEFT JOIN district dis ON dis.did = sdc.did
+			WHERE 1=1
+				<if test="did == 0">
+					AND dis.level = 1
+				</if>
+				<if test="dlevel != 0">
+					<if test="dlevel == 1">
+						AND dis.level = 2 AND dis.pid = #{did}
+					</if>
+					<if test="dlevel == 2">
+						AND dis.level = 3 AND dis.pid = #{did}
+					</if>
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')
+					</if>
+					<if test="date_type == 2">
+						AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+					</if>
+					<if test="date_type == 3">
+						AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+					</if>
+				</if>
+			GROUP BY did
+			ORDER BY value DESC;
+			
+		</select>
+
+		<!-- TOP10进（出）口前十个行业 -->  
+	<select id="getIndustryStaticTimeTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryStaticTimeTop10" useCache="true">
+		
+		SELECT
+			cat.cid cid,
+			cat.cname_en cnameEn,
+			<if test="ietype == 0">
+				 <if test="vwtype == 0">
+				 	SUM(sdc.imp_total_volume) value
+				 </if>
+				 <if test="vwtype == 1">
+				 	SUM(sdc.imp_total_weight) value
+				 </if>
+			</if>
+			<if test="ietype == 1">
+				<if test="vwtype == 0">
+				 	SUM(sdc.exp_total_volume) value
+				 </if>
+				 <if test="vwtype == 1">
+				 	SUM(sdc.exp_total_weight) value
+				 </if>
+			</if>
+		FROM
+			category_new cat
+		LEFT JOIN statis_dis_cate_month sdc ON cat.cid = sdc.cid
+		<if test="dlevel != 0">
+			LEFT JOIN district dis ON sdc.did = dis.did
+		</if>
+		WHERE 1=1 
+		<if test="date_type != 0">
+			<if test="date_type == 1">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 3 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 2">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 6 MONTH),1,7),'-','')
+			</if>
+			<if test="date_type == 3">
+				AND sdc.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+			</if>
+		</if>
+		<if test="dlevel == 0">
+				AND dis.level=1
+			</if>
+			<if test="dlevel != 0">
+				<if test="dlevel == 1">
+					AND dis.did = #{did} AND dis.level=1
+				</if>
+				<if test="dlevel == 2">
+					AND dis.did = #{did} AND dis.level = 2
+				</if>
+				<if test="dlevel == 3">
+					AND dis.did = #{did} AND dis.level = 3
+				</if>
+			</if>
+		GROUP BY cid
+		ORDER BY value DESC  LIMIT 10;
+		
+	</select>
+
+		<!-- TOP10进（出）口行业半年内的趋势 -->  
+	<select id="getIndustryTrendTop10" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryStatis" useCache="true">
+		
+		SELECT
+			<if test="ietype == 0">
+				<if test="vwtype == 0">
+					SUM(sdp.imp_total_volume) value,
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdp.imp_total_weight) value,
+				</if>
+			</if>
+			<if test="ietype == 1">
+				<if test="vwtype == 0">
+					SUM(sdp.exp_total_volume) value,
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdp.exp_total_weight) value,
+				</if>
+			</if>
+			sdp.s_date statisTime
+		FROM
+			statis_dis_product_month sdp
+			LEFT JOIN district dis on dis.did = sdp.did
+		WHERE 1=1 AND sdp.cid = #{cid}
+			<if test="dlevel == 0">
+				AND dis.level=1
+			</if>
+			<if test="dlevel != 0">
+				<if test="dlevel == 1">
+					AND dis.did = #{did} AND dis.level=1
+				</if>
+				<if test="dlevel == 2">
+					AND dis.did = #{did} AND dis.level = 2
+				</if>
+				<if test="dlevel == 3">
+					AND dis.did = #{did} AND dis.level = 3
+				</if>
+			</if>
+		AND sdp.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+		GROUP BY statisTime;
+	</select>
+	
+	
+	<!-- 地区进口趋势 图-->  
+	<select id="getAreaTurnoverTrend" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.IndustryTop10Entity" useCache="true">
+	
+		SELECT
+			<if test="ietype == 0">
+				<if test="vwtype == 0">
+					SUM(sdp.imp_total_volume) value,
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdp.imp_total_weight) value,
+				</if>
+			</if>
+			<if test="ietype == 1">
+				<if test="vwtype == 0">
+					SUM(sdp.exp_total_volume) value,
+				</if>
+				<if test="vwtype == 1">
+					SUM(sdp.exp_total_weight) value,
+				</if>
+			</if>
+			sdp.s_date statisTime
+		FROM
+			statis_dis_product_month sdp
+			LEFT JOIN district dis on dis.did = sdp.did
+		WHERE 1=1 AND sdp.cid = #{cid}
+			<if test="dlevel == 0">
+				AND dis.level=1
+			</if>
+			<if test="dlevel != 0">
+				<if test="dlevel == 1">
+					AND dis.did = #{did} AND dis.level=1
+				</if>
+				<if test="dlevel == 2">
+					AND dis.did = #{did} AND dis.level = 2
+				</if>
+				<if test="dlevel == 3">
+					AND dis.did = #{did} AND dis.level = 3
+				</if>
+			</if>
+		AND sdp.s_date >= REPLACE(SUBSTR(DATE_SUB(CURDATE(), INTERVAL 12 MONTH),1,7),'-','')
+		GROUP BY statisTime;
+	</select>
+		
+	<select id="getProList" resultType="com.gls.search.entity.ProductEntity">
+	
+		select id,id proId,name,category_level3_id cid,category_name cname from  product_new group by name
+	
+	</select>
+	
+	
+	<select id="getBuyerList" parameterType="map" resultType="com.gls.search.entity.SupplierEntity">	
+		
+		<if test="ietype==0">
+		select 
+			b.id sid,
+			b.origin_name sname,
+			b.link_phone linkPhone,
+			b.details_address detailsAddress,
+			b.logo_url logoUrl,url netUrl,
+			b.total_count totalCount,
+			b.total_weight totalWeight,
+			b.total_volume totalVolume,
+			b.last_date lastDate,
+			b.last_product_desc lastProductDesc
+		from  
+		businesses_new b 
+		<if test="dlevel == 2">
+			 where b.did_level2 = #{did}
+		</if>
+		<if test="dlevel == 3">
+			 where b.did_level3 = #{did}
+		</if>
+		order by b.total_count desc
+		limit #{pageNo},#{pageSize}
+		</if>
+		<if test="ietype==1">
+		select 
+			s.id sid,
+			s.origin_name sname,
+			s.link_phone linkPhone,
+			s.details_address detailsAddress,
+			s.logo_url logoUrl,url netUrl,
+			s.total_count totalCount,
+			s.total_weight totalWeight,
+			s.total_volume totalVolume,
+			s.last_date lastDate,
+			s.last_product_desc lastProductDesc
+		from  
+		suppliers_new s
+		<if test="dlevel == 2">
+			 where s.did_level2 = #{did}
+		</if>
+		<if test="dlevel == 3">
+			 where s.did_level3 = #{did}
+		</if>
+		order by s.total_count desc
+		 limit #{pageNo},#{pageSize}
+		</if>
+		  
+	</select>
+	
+	<select id="getBuyerListCount" parameterType="map" resultType="Integer">	
+		
+		<if test="ietype==0">
+		select 
+			count(1)
+		from  
+		businesses_new b 
+		<if test="dlevel == 2">
+			 where b.did_level2 = #{did}
+		</if>
+		<if test="dlevel == 3">
+			 where b.did_level3 = #{did}
+		</if>
+		</if>
+		<if test="ietype==1">
+		select 
+			count(1)
+		from  
+		suppliers_new s
+		<if test="dlevel == 2">
+			 where s.did_level2 = #{did}
+		</if>
+		<if test="dlevel == 3">
+			 where s.did_level3 = #{did}
+		</if>
+		</if>
+		  
+	</select>
+	
+		<select id="getFrankOrBeen" parameterType="Integer" resultType = "com.gls.pojo.FrankOrderBeen">
+		
+			SELECT
+				id orderId,
+				frankly_code orderNo,
+				total_volume volume,
+				businesses_name buniess,
+				businesses_address businessesAddress,
+				suppliers_name supplier,
+				suppliers_address suppliersAddress,
+				product_description proDesc,
+				frankly_time arrideDate,
+				contact_name tongzhiren,
+				qiyun_prot_name qiyunPort,
+				mudi_prot_name mudiPort,
+				mudi_country countryName,
+				fact_weight orderWeight,
+				originer_country orginierCountry,
+				vessel_name vesselName
+			FROM
+				frankly_oredr_new
+			WHERE
+				id = #{orderId}
+		
+	</select> 
+		
+	</mapper>

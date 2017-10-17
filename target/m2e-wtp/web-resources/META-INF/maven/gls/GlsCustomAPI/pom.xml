@@ -1,0 +1,505 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>gls</groupId>
+	<artifactId>GlsCustomAPI</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<packaging>war</packaging>
+	<name>GlsCustomAPI</name>
+
+	<url>http://maven.apache.org</url>
+
+	<properties>
+		<spring.version>3.2.6.RELEASE</spring.version>
+		<java.version>1.7</java.version>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
+
+	<profiles>
+		<profile>
+			<id>default</id>
+			<activation>
+				<activeByDefault>true</activeByDefault>
+			</activation>
+			<properties>
+				<!-- <config.redis.host>10.27.196.122</config.redis.host> -->
+				<config.redis.host>127.0.0.1</config.redis.host>
+				<config.redis.port>6379</config.redis.port>
+				<config.redis.database>0</config.redis.database>
+				<config.redis.timeout>100000</config.redis.timeout>
+				<config.redis.maxActive>10</config.redis.maxActive>
+				<config.redis.maxIdle>3</config.redis.maxIdle>
+				<config.redis.maxWait>1000</config.redis.maxWait>
+				
+				<!-- rabbit default -->
+				<config.rabbit.host>120.76.125.13</config.rabbit.host>
+				<config.rabbit.username>xinqing</config.rabbit.username>
+				<config.rabbit.password>xinqing1qaz2wsx</config.rabbit.password>
+				
+				
+				<!-- JDBC default characterEncoding=utf-8&amp; 120.132.84.162:3306  120.132.84.162:4040 123.59.64.51:4141-->
+			
+				<!-- <config.jdbc.url>
+					<![CDATA[jdbc:mysql://120.76.125.13:3306/gls_emt?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=utf8&allowMultiQueries=true]]>
+				</config.jdbc.url>
+				<config.jdbc.username>geluosi</config.jdbc.username>
+				<config.jdbc.password>Geluosi!QAZ2wsx</config.jdbc.password>
+				
+				<config.upfileurl>D:/upimg/</config.upfileurl>
+				<config.upyunurl>yyy</config.upyunurl>  -->
+			
+				<config.jdbc.url>
+					<![CDATA[jdbc:mysql://120.76.225.183:9696/usa_2016?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=utf8&allowMultiQueries=true]]>
+				</config.jdbc.url>
+				<config.jdbc.username>geluosi</config.jdbc.username>
+				<config.jdbc.password>Geluosi!QAZ2wsx</config.jdbc.password>
+				
+				<config.upfileurl>D:/upimg/</config.upfileurl>
+				<config.upyunurl>yyy</config.upyunurl> 
+				
+								<!-- 支付Url -->
+				<config.payurl>http://120.76.125.13:8084/pay/pinganpay</config.payurl>
+				<!-- onlineid 90f2246e678215564c17a5ec2605c4a8-->
+				<config.openId>73b24f53ffc64486eb40d606456fb04d</config.openId>
+				<config.openKey>7386072b1f94fdd7acaae83cd0f0f1c1</config.openKey>
+				<!-- onlinekey 00b09577ba30b7a27dc98aecd4a632b4-->
+				
+				
+			</properties>
+		</profile>
+		
+		<profile>
+			<id>develop</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<config.redis.host>10.27.196.122</config.redis.host>
+				<config.redis.port>6379</config.redis.port>
+				<config.redis.database>0</config.redis.database>
+				<config.redis.timeout>100000</config.redis.timeout>
+				<config.redis.maxActive>10</config.redis.maxActive>
+				<config.redis.maxIdle>3</config.redis.maxIdle>
+				<config.redis.maxWait>1000</config.redis.maxWait>
+				
+				<!-- rabbit dev 10.10.97.38 Dbz150801123 -->
+				<config.rabbit.host>10.25.102.106</config.rabbit.host>
+				<config.rabbit.username>geluosi</config.rabbit.username>
+				<config.rabbit.password>xinqing1qaz2wsx</config.rabbit.password>
+				<!-- JDBC dev characterEncoding=utf-8&amp; 10.10.134.78:3306 Dbz150801 10.10.92.76:3307  dbz1508011qaz2wsx-->
+				<config.jdbc.url>
+					<![CDATA[jdbc:mysql://10.45.167.75:3306/gls_custom?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=utf8&allowMultiQueries=true]]>
+				</config.jdbc.url>
+				<config.jdbc.username>geluosi</config.jdbc.username>
+				<config.jdbc.password>Geluosi!QAZ2wsx</config.jdbc.password>
+				
+				<config.debugLevel>error</config.debugLevel>
+				<config.upfileurl>/tmp/</config.upfileurl>
+				<config.upyunurl>yyy</config.upyunurl>
+				
+				
+				<!-- 支付Url -->
+				<config.payurl>http://devpay.g2l-service.com/ytpay/ytpingpaypre</config.payurl> 
+			</properties>
+		</profile>
+
+		<profile>
+			<id>product</id>
+			<activation>
+				<activeByDefault>false</activeByDefault>
+			</activation>
+			<properties>
+				<config.redis.host>10.27.196.122</config.redis.host>
+				<config.redis.port>6379</config.redis.port>
+				<config.redis.database>4</config.redis.database>
+				<config.redis.timeout>100000</config.redis.timeout>
+				<config.redis.maxActive>10</config.redis.maxActive>
+				<config.redis.maxIdle>3</config.redis.maxIdle>
+				<config.redis.maxWait>1000</config.redis.maxWait>
+				
+				<!-- rabbit dev 10.10.97.38 Dbz150801123 -->
+				<config.rabbit.host>10.25.102.106</config.rabbit.host>
+				<config.rabbit.username>geluosi</config.rabbit.username>
+				<config.rabbit.password>Geluosi!QAZ2wsx</config.rabbit.password>
+				<!-- JDBC dev characterEncoding=utf-8&amp; 10.10.134.78:3306 Dbz150801 10.10.92.76:3307  dbz1508011qaz2wsx-->
+				<config.jdbc.url>
+					<![CDATA[jdbc:mysql://10.27.194.184:3306/usa_2016?useUnicode=true&zeroDateTimeBehavior=convertToNull&characterEncoding=utf8&allowMultiQueries=true]]>
+				</config.jdbc.url>
+				<config.jdbc.username>geluosi</config.jdbc.username>
+				<config.jdbc.password>Geluosi!QAZ2wsx</config.jdbc.password>
+				
+				<config.debugLevel>error</config.debugLevel>
+				<config.upfileurl>/tmp/</config.upfileurl>
+				<config.upyunurl>yyy</config.upyunurl>
+				
+				
+				<!-- 支付Url -->
+				<config.payurl>http://pay.g2l-service.com:80/pay/pinganpay</config.payurl>
+				<!-- onlineid 90f2246e678215564c17a5ec2605c4a8-->
+				<config.openId>90f2246e678215564c17a5ec2605c4a8</config.openId>
+				<config.openKey>00b09577ba30b7a27dc98aecd4a632b4</config.openKey>
+				<!-- onlinekey 00b09577ba30b7a27dc98aecd4a632b4-->
+				
+			</properties>
+		</profile>
+	</profiles>
+
+	 
+	
+	<dependencies>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>3.8.1</version>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>  
+        <groupId>org.codehaus.jackson</groupId>  
+        <artifactId>jackson-mapper-asl</artifactId>  
+        <version>1.9.8</version>  
+        <type>jar</type>  
+        <scope>compile</scope>  
+ 		</dependency>  
+
+
+		<dependency>
+		    <groupId>com.google.code.gson</groupId>
+		    <artifactId>gson</artifactId>
+		    <version>2.3.1</version>
+		</dependency>
+
+		<dependency>
+		    <groupId>org.jsoup</groupId>
+		    <artifactId>jsoup</artifactId>
+		    <version>1.10.2</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-core</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-web</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webmvc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aop</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-beans</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-aspects</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-context-support</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<version>${spring.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.amqp</groupId>
+			<artifactId>spring-amqp</artifactId>
+			<version>1.1.4.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.amqp</groupId>
+			<artifactId>spring-rabbit</artifactId>
+			<version>1.1.4.RELEASE</version>
+		</dependency>
+		<!--  fix tomcat memory leak -->
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.36</version>
+		</dependency>
+
+		
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-jdbc</artifactId>
+			<version>7.0.64</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.tomcat</groupId>
+			<artifactId>tomcat-juli</artifactId>
+			<version>7.0.64</version>
+		</dependency>
+				
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+			<version>1.4</version>
+		</dependency> 
+		<dependency>
+			<groupId>commons-pool</groupId>
+			<artifactId>commons-pool</artifactId>
+			<version>1.6</version>
+		</dependency>
+		<dependency>
+		<groupId>commons-httpclient</groupId>
+		<artifactId>commons-httpclient</artifactId>
+		<version>3.1</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.thoughtworks.xstream</groupId>
+		    <artifactId>xstream</artifactId>
+		    <version>1.4.9</version>
+		</dependency>
+		
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis</artifactId>
+			<version>3.0.6</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mybatis</groupId>
+			<artifactId>mybatis-spring</artifactId>
+			<version>1.0.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.data</groupId>
+			<artifactId>spring-data-redis</artifactId>
+			<version>1.1.0.RELEASE</version>
+		</dependency>
+
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>2.1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>cglib</groupId>
+			<artifactId>cglib</artifactId>
+			<version>2.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-core</artifactId>
+			<version>1.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.5</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-io</groupId>
+			<artifactId>commons-io</artifactId>
+			<version>1.4</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-fileupload</groupId>
+			<artifactId>commons-fileupload</artifactId>
+			<version>1.2.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.codehaus.jackson</groupId>
+			<artifactId>jackson-mapper-asl</artifactId>
+			<version>1.9.8</version>
+		</dependency>
+		<dependency>
+		<groupId>org.apache.poi</groupId>
+		<artifactId>poi-ooxml</artifactId>
+		<version>3.9</version>
+		</dependency>
+		<!-- need 4 first time -->
+		<dependency>
+			<groupId>javax.servlet</groupId>
+			<artifactId>javax.servlet-api</artifactId>
+			<version>3.0.1</version>
+		</dependency> 
+		<dependency>
+			<groupId>taglibs</groupId>
+			<artifactId>standard</artifactId>
+			<version>1.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>javax.servlet.jsp.jstl</groupId>
+			<artifactId>jstl-api</artifactId>
+			<version>1.2</version>
+		</dependency>
+		<dependency>
+		    <groupId>dom4j</groupId>
+		    <artifactId>dom4j</artifactId>
+		    <version>1.6.1</version> 
+		</dependency>
+<!-- 		nexus私服pom luosimao 短信发送 依赖两个jar包 :jersey-bundle-1.19.jar json-org.jar -->
+		<dependency>
+		  <groupId>com.gls.thirdparty</groupId>
+		  <artifactId>luosimao-jersey-bundle</artifactId>
+		  <version>1.19</version>
+		</dependency>
+		<dependency>
+    <groupId>org.xhtmlrenderer</groupId>
+    <artifactId>core-renderer</artifactId>
+    <version>R8pre2</version>
+</dependency>
+		<dependency>
+		  <groupId>com.gls.thirdparty</groupId>
+		  <artifactId>gson</artifactId>
+		  <version>2.2.4</version>
+		</dependency>
+<!--  		ping++ Start  -->
+		<dependency>
+		    <groupId>com.gls.thirdparty</groupId>
+			<artifactId>commons-codec</artifactId>
+			<version>1.10</version>
+		</dependency>
+		<dependency>
+		  <groupId>com.gls.thirdparty</groupId>
+		  <artifactId>luosimao-json-org</artifactId>
+		  <version>1.0</version>
+		</dependency>
+		<dependency>
+		 <groupId>com.gls.thirdparty</groupId>
+		 <artifactId>pingpp-java</artifactId>
+		 <version>2.0.6</version>
+		</dependency>
+<!-- 		ping++ End  -->
+<!-- 		nexus私服pom luosimao 短信发送 依赖两个jar包  -->
+
+
+		<!--solr客户端solrj的依赖 -->  
+        <dependency>  
+            <groupId>org.apache.solr</groupId>  
+            <artifactId>solr-solrj</artifactId>  
+            <version>4.10.1</version>  
+        </dependency>
+        
+        <dependency>
+		    <groupId>com.alibaba</groupId>
+		    <artifactId>fastjson</artifactId>
+		    <version>1.2.20</version>
+		</dependency>  
+	
+	
+	</dependencies>
+
+	<repositories>
+		<repository>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+			<id>public</id>
+			<name>Public Repositories</name>
+			<!-- old:120.132.84.162 new:10.25.102.106 -->
+			<url>http://120.77.69.15:8081/nexus/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>public</id>
+			<name>Public Repositories</name>
+			<url>http://120.77.69.15:8081/nexus/content/groups/public</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+
+	<build>
+		<finalName>ROOT</finalName>
+		<sourceDirectory>src/main/java</sourceDirectory>
+		<scriptSourceDirectory>src/main/conf</scriptSourceDirectory>
+		<resources>
+			<resource>
+				<directory>src/main/java</directory>
+				<includes>
+					<include>**/*.xml</include>
+				</includes>
+				<filtering>false</filtering>
+			</resource>
+			<resource>
+				<directory>src/main/conf</directory>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.json</include>
+					<include>**/*.properties</include>
+				</includes>
+				<filtering>true</filtering>
+			</resource>
+		</resources>
+		<outputDirectory>webroot/WEB-INF/classes</outputDirectory>
+		<plugins>
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.1</version>
+				<configuration>
+					<source>1.7</source>
+					<bootclasspath>/System/Library/Frameworks/JavaVM.framework/Versions/CurrentJDK/Home/lib/rt.jar</bootclasspath>
+					<target>1.7</target>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-war-plugin</artifactId>
+				<version>2.3</version>
+				<configuration>
+					<webXml>webroot/WEB-INF/web.xml</webXml>
+					<warSourceDirectory>webroot</warSourceDirectory>
+					<failOnMissingWebXml>false</failOnMissingWebXml>
+				</configuration>
+			</plugin>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<executions>
+					<execution>
+						<id>copy-lib-src-webapps</id>
+						<phase>package</phase>
+						<configuration>
+							<tasks>
+								<copy todir="webroot/WEB-INF/lib">
+									<fileset dir="target/ROOT/WEB-INF/lib">
+										<include name="*" />
+									</fileset>
+								</copy>
+								<copy todir="webroot/WEB-INF/classes">
+									<fileset dir="target/ROOT/WEB-INF/classes">
+										<include name="*" />
+									</fileset>
+								</copy>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+
+
+
+</project>

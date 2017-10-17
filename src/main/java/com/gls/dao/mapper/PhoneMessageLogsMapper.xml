@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gls.dao.mapper.PhoneMessageLogsMapper">
+	<resultMap id="BaseResultMap" type="com.gls.pojo.PhoneMessageLogs">
+		<id column="id" jdbcType="BIGINT" property="id" />
+		<result column="mobilephone" jdbcType="BIGINT" property="mobilephone" />
+		<result column="content" jdbcType="VARCHAR" property="content" />
+		<result column="process" jdbcType="TINYINT" property="process" />
+		<result column="remark" jdbcType="VARCHAR" property="remark" />
+		<result column="send_time" jdbcType="TIMESTAMP" property="sendTime" />
+		<result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+		<result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+		<result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+	</resultMap>
+
+	<insert id="insertMessageLogs" useGeneratedKeys="true">
+		INSERT INTO phone_message_logs
+		( `mobilephone`, `content`, `send_time`, `create_time`)
+		VALUES
+		( #{mobilephone}, #{content}, NOW(), NOW());
+	</insert>
+</mapper>

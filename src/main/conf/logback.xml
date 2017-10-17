@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+
+<configuration >
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<Pattern>%-70(%c{15}.%M[%date{yyyy-MM-dd HH:mm:ss}]) : %m%ex%n</Pattern>
+		</layout>
+	</appender>
+
+	<appender name="WEB_ERROR_LOGGER" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>web.error.log</file>
+	    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+	    	<fileNamePattern>web.error-%d{yyyy-MM}-%i.log</fileNamePattern>
+			<minIndex>1</minIndex>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>100MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+	    <encoder>
+			<pattern>%msg%n</pattern>
+		</encoder>
+	</appender>
+	
+    <logger name="com.gls" level="${config.debugLevel}">
+	   <appender-ref ref="WEB_ERROR_LOGGER"/> 
+	</logger>
+	
+	<!--  
+	<logger name="java.sql" level="${config.debugLevel}">
+	   <appender-ref ref="STDOUT"/> 
+	</logger>
+	<logger name="org.springframework.jdbc.datasource" level="debug" ><appender-ref ref="STDOUT"/> </logger> 
+	<logger name="org.mybatis" level="debug" ><appender-ref ref="STDOUT"/> </logger>
+	-->
+	
+	<root>
+		<level value="info" />
+		<appender-ref ref="STDOUT" />
+	</root>
+	
+</configuration>

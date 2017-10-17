@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+	<mapper namespace="com.gls.dao.mapper.ComDetailMapper">
+	
+	<select id="getComIdByName" resultType="int">
+		<if test="type == 0">
+			select id from businesses where name = #{name}
+		</if>
+		<if test="type == 1">
+			select id from suppliers where name = #{name}
+		</if>
+	</select>
+		
+	</mapper>

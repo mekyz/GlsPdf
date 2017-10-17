@@ -1,0 +1,2093 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+	<mapper namespace="com.gls.dao.mapper.ProductMapper">
+		<cache eviction="FIFO" flushInterval="60000000" size="102400000" readOnly="true"  />  
+		<!-- 全球出口/进口服装top10国家排名 柜量/重量 -->
+		<select id="findProductCountryRanking" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.CustomPaimingTop10">
+			
+			SELECT
+				<if test="did == 0">
+					br.did_level1 did,
+					br.did_level1_name dname,
+				</if>
+				<if test="did != 0">
+					<if test = "dlevel == 1">
+						br.did_level2 did,
+						br.did_level2_name dname,
+					</if>
+				</if>
+				<if test="vwtype == 0">
+					sum(br.total_volume) value
+				</if>
+				<if test="vwtype==1">
+					sum(br.total_weight) value
+				</if>
+			FROM
+				<if test="ietype == 0">
+					import_order_day br
+				</if>	
+				<if test="ietype == 1">
+					export_order_day br
+				</if>	 
+			WHERE br.category_level2_id = #{pid} and br.did_level1 != 0
+				<if test="did != 0">
+					<if test="dlevel == 1">
+						and br.did_level1 = #{did}
+					</if>
+					<if test="dlevel == 2">
+						and br.did_level2 = #{did}
+					</if>
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						and br.frankly_time >= "2017-02"
+					</if>
+					<if test="date_type == 2">
+						and br.frankly_time >= "2016-11"
+					</if>
+					<if test="date_type == 3">
+						and br.frankly_time >= "2016-05"
+					</if>
+				</if>
+			GROUP BY did  
+			ORDER BY value DESC LIMIT 0,10
+			
+			<!-- SELECT 
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 dname,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 dname,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 dname,
+			</if>
+			
+		  	<if test="vwtype==0">
+				sum(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				sum(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did  
+			ORDER BY value DESC LIMIT 0,10 -->
+			
+		</select>
+		
+		<!-- 产品出口/进口国占比饼图 柜量/重量 -->
+		<select id="findProductProportion" parameterType="map" resultType="com.gls.pojo.IndustrySupplierTop10">
+			
+			SELECT
+				<if test="dlevel == 0">
+					br.did_level1 did,
+					br.did_level1_name dname,
+				</if>					
+				<if test="dlevel == 1">
+					br.did_level2 did,
+					br.did_level2_name dname,
+				</if>
+				<if test="vwtype==0">
+					sum(br.total_volume) value
+				</if>
+				<if test="vwtype==1">
+					sum(br.total_weight) value
+				</if>
+			FROM 
+				<if test="ietype==0">
+					import_order_day br
+				</if>
+				<if test="ietype==1">
+					import_order_day br
+				</if>
+			WHERE br.category_level2_id = #{pid} and br.did_level1 != 0
+				<if test="dlevel == 1">
+					AND br.did_level1 = #{did}
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						and br.frankly_time >= "2017-02"
+					</if>
+					<if test="date_type == 2">
+						and br.frankly_time >= "2016-11"
+					</if>
+					<if test="date_type == 3">
+						and br.frankly_time >= "2016-05"
+					</if>
+				</if>
+			GROUP BY did   
+			ORDER BY value DESC  LIMIT 0,10
+			
+			<!-- SELECT
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 dname,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 dname,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 dname,
+			</if>
+		  	<if test="vwtype==0">
+				sum(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				sum(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+				WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did   
+			ORDER BY value DESC  LIMIT 0,10 -->
+			
+		</select>
+		
+		<!-- 出口/进口 产品top10 供应商/采购商 排名  柜量/重量 -->
+		<select id="findSupplierTop10" parameterType="map" resultType="Map">
+		
+		SELECT
+			bcr.company_id id,
+			bcr.company_name name,
+			<if test="vwtype == 0">
+				sum(bcr.total_volume) value				
+			</if>
+			<if test="vwtype == 1">
+				sum(bcr.total_weight) value					
+			</if>
+			from
+				<if test="ietype == 0">
+					businesses_category_rank bcr				
+				</if>
+				<if test="ietype == 1">
+					suppliers_category_rank bcr	
+				</if>
+			where bcr.category_level2_id = #{pid}
+				<if test="did == 0">
+					AND did_type = 0
+				</if>
+				<if test="did != 0">
+					<if test="dlevel == 1">
+						and bcr.did = #{did} and did_type = 1
+					</if>
+					<if test="dlevel == 2">
+						and bcr.did = #{did} and did_type = 2
+					</if>
+					<if test="dlevel == 3">
+						and bcr.did = #{did} and did_type = 3
+					</if>
+				</if>
+				<if test="date_type == 0">
+					AND bcr.frankly_type = 0
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						AND bcr.frankly_type = 1
+					</if>
+					<if test = "date_type == 2">
+						AND bcr.frankly_type == 2
+					</if>
+					<if test="date_type == 3">
+						AND bcr.frankly_type = 3
+					</if>
+				</if>
+			GROUP BY id  
+			ORDER BY value DESC LIMIT 0,10
+		
+			<!-- SELECT 
+			b.id id,b.name,
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY id  
+			
+			ORDER BY value DESC LIMIT 0,10 -->
+			
+		</select>
+		
+		<!-- 产品供应商分布比重图 -->
+		<select id="findSupplierDistri" parameterType="map" resultType="com.gls.pojo.SupplierDistri">
+			
+			SELECT 
+				<if test="did == 0">
+					bd.did_level1 did,
+					bd.did_level1_name name,	
+				</if>
+				<if test="did != 0">
+					<if test="dlevel == 1">
+						bd.did_level2 did,
+						bd.did_level2_name name,
+					</if>
+					<if test="dlevel == 2">
+						bd.did_level3 did,
+						bd.did_level3_name name,
+					</if>
+				</if>
+				COUNT(company_count) value
+			FROM
+				<if test="ietype == 0">
+					businesses_dim bd
+				</if>
+				<if test="ietype == 1">
+					suppliers_dim bd
+				</if>
+			WHERE
+				bd.category_level2_id = #{pid}
+				<if test="did == 0">
+					AND bd.date_type = 0
+				</if>
+				<if test="did != 0"> 
+					<if test="dlevel == 1">
+						and bd.did_level1 = #{did}
+					</if>
+					<if test="dlevel == 2">
+						and bd.did_level2 = #{did}
+					</if>
+				</if>
+				<if test="date_type == 0">
+					AND bd.date_type = 0
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						AND bd.date_type = 1
+					</if>
+					<if test="date_type == 2">
+						AND bd.date_type == 2
+					</if>
+					<if test="date_type == 3">
+						AND bd.date_type = 3
+					</if>
+				</if>
+			GROUP BY did
+			ORDER BY value DESC LIMIT 0,10
+			
+			<!-- SELECT 
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 name,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 name,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 name,
+			</if>
+			<if test="ietype==0">
+			 COUNT(b.id) value
+			</if>
+			<if test="ietype==1">
+			 COUNT(b.id) value
+			</if>	
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			GROUP BY did
+			ORDER BY value DESC LIMIT 0,10
+			 -->
+			
+		</select>
+		
+		<!-- 供应商/采购商 总数 -->
+		<select id="findBusinessSum" parameterType="map" resultType="Double">
+			
+			SELECT 
+				COUNT(company_count) value
+			FROM
+				<if test="ietype == 0">
+					businesses_dim bd
+				</if>
+				<if test="ietype == 1">
+					suppliers_dim bd
+				</if>
+			WHERE
+				bd.category_level2_id = #{pid}
+				<if test="did == 0">
+					AND bd.date_type = 0
+				</if>
+				<if test="did != 0"> 
+					<if test="dlevel == 1">
+						and bd.did_level1 = #{did}
+					</if>
+					<if test="dlevel == 2">
+						and bd.did_level2 = #{did}
+					</if>
+				</if>
+				<if test="date_type == 0">
+					AND bd.date_type = 0
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						AND bd.date_type = 1
+					</if>
+					<if test="date_type == 2">
+						AND bd.date_type == 2
+					</if>
+					<if test="date_type == 3">
+						AND bd.date_type = 3
+					</if>
+				</if>
+			<!-- SELECT 
+				DISTINCT count(b.id) Count  
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if> -->
+			<!-- <if test="did =null or did=0 ">  	
+				AND d.level=1	
+			</if> -->
+		</select> 
+		
+		<!-- 跨境贸易 进口/出口  柜量/重量 -->
+		<select id="findProductSum" parameterType="map" resultType="Double">
+			
+			SELECT
+				<if test="vwtype==0">
+					SUM(pf.total_volume) value
+				</if>
+				<if test="vwtype==1">
+					SUM(pf.total_weight) value
+				</if>
+			FROM
+				<if test="ietype == 0">
+					import_order_day pf
+				</if>
+				<if test="ietype == 1">
+					export_order_day pf
+				</if>
+			WHERE pf.category_level2_id = #{pid}  and pf.did_level1 != 0
+				<if test="did != 0"> 
+					<if test="dlevel == 1">
+						and pf.did_level1 = #{did}
+					</if>
+					<if test="dlevel == 2">
+						and pf.did_level2 = #{did}
+					</if>
+				</if>
+				<if test="date_type != 0">
+					<if test="date_type == 1">
+						AND pf.frankly_time >= "2017-02"
+					</if>
+					<if test="date_type == 2">
+						AND pf.frankly_time >= "2016-11"
+					</if>
+					<if test="date_type == 3">
+						AND pf.frankly_time >= "2016-05"
+					</if>
+				</if>
+			
+			<!-- SELECT 
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+			WHERE p.id = #{pid}  
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if> -->
+			
+		</select>
+		
+		<!-- 产品Top10供应商 进口/出口 趋势-->
+		<select id="findProductSupplierTrend" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.Trend">
+			
+			
+			SELECT
+				bcm.frankly_time yearMonth,
+				<if test="vwtype == 0">
+					sum(bcm.total_volume) value
+				</if>
+				<if test="vwtype == 1">
+					sum(bcm.total_weight) value
+				</if>
+			FROM
+				<if test="ietype == 0">
+					businesses_category_month bcm
+				</if>
+				<if test="ietype == 1">
+					suppliers_category_month bcm
+				</if>
+			WHERE 
+				bcm.company_id = #{shangJiaId}
+				AND bcm.category_level2_id = #{pid}
+				AND bcm.frankly_time >= SUBSTR(DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-%d'), INTERVAL 12 MONTH),1,7)
+				GROUP BY yearMonth ORDER BY yearMonth limit 12
+			
+			<!-- SELECT 
+			DATE_FORMAT(pf.frankly_time ,'%Y-%m') yearMonth,
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM frankly_oredr pf
+			LEFT JOIN product_new p ON p.hs_code = pf.hs_code
+			WHERE
+			<if test="ietype==0">
+				pf.businesses_id=#{shangJiaId} 
+			</if>
+			<if test="ietype==1">
+				pf.suppliers_id=#{shangJiaId}
+			</if>
+			and p.id = #{pid} 
+			GROUP BY yearMonth -->
+			
+		</select>
+		<!-- (辅助接口)产品Top10供应商 进口/出口 趋势(获取id)-->
+		<select id="findProductSupplierTrend2" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductSupplierTrend">
+			
+			SELECT 
+				pf.company_id id,
+				pf.company_name name
+			FROM 
+			<if test="ietype==0">
+				businesses_category_rank pf
+			</if>
+			<if test="ietype==1">
+				suppliers_category_rank pf
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did != 0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY id
+			<if test="vwtype==0">
+			ORDER BY SUM(pf.total_volume) DESC LIMIT 0,10
+			</if>
+			<if test="vwtype==1">
+			ORDER BY SUM(pf.total_weight) DESC LIMIT 0,10
+			</if>
+			
+			<!-- SELECT 
+				b.id id,pf.businesses_name name
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			GROUP BY name
+			<if test="vwtype==0">
+			ORDER BY SUM(pf.total_volume) DESC LIMIT 0,10
+			</if>
+			<if test="vwtype==1">
+			ORDER BY SUM(pf.total_weight) DESC LIMIT 0,10
+			</if> -->
+		</select>
+		
+		<!-- 产品 进口/出口 趋势 -->
+		<select id="findProductTrend" parameterType="map" resultType="Map">
+			
+			SELECT
+				pf.frankly_time as yearMonth ,
+				<if test="vwtype==0">
+					pf.total_volume value
+				</if>
+				<if test="vwtype==1">
+					pf.total_weight value
+				</if>
+			FROM
+				<if test="ietype==0">
+					import_order_day pf
+				</if>
+				<if test="ietype==1">
+					export_order_day pf
+				</if>
+			WHERE pf.category_level2_id = #{pid} 
+			
+			AND pf.frankly_time >= SUBSTR(DATE_SUB(DATE_FORMAT(CURDATE(),'%Y-%m-%d'), INTERVAL 12 MONTH),1,7)
+				GROUP BY yearMonth ORDER BY yearMonth limit 12
+			<!-- SELECT 
+				DATE_FORMAT(pf.frankly_time,'%Y-%m') as yearMonth ,
+			<if test="vwtype==0">
+				pf.total_volume value
+			</if>
+			<if test="vwtype==1">
+				pf.total_weight value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			GROUP BY DATE_FORMAT(pf.frankly_time,'%Y-%m')  -->
+			
+		</select>
+		
+		<!--进出口产品Top10 目的国/来源国排名  -->
+		<select id="findProductTop10Destination" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.CustomPaimingTop10">
+			
+			SELECT
+				ios.other_did_level1 did,
+				ios.other_did_level1_name dname,
+				<if test="vwtype == 0">
+					sum(ios.total_volume) value
+				</if>
+				<if test="vwtype == 1">
+					sum(ios.total_weight) value
+				</if>
+			FROM
+				<if test="ietype == 0">
+					import_order_source ios
+				</if>	
+				<if test="ietype == 1">
+					export_order_destination ios
+				</if>
+			WHERE
+ 				 ios.did_level1 = #{did}
+ 				 and ios.category_level2_id = #{pid}
+			GROUP BY
+				ios.other_did_level1
+			ORDER BY 
+				value DESC LIMIT 0,10;
+			
+			<!-- <if test="ietype==0">
+			SELECT  
+				fod.originer_country_id did,originer_country dname,
+				<if test="vwtype==0">
+					sum(pif.total_volume) value 
+				</if>
+				<if test="vwtype==1">
+					sum(pif.total_weight) value
+				</if>
+			FROM frankly_oredr fod
+			LEFT JOIN frankly_oredr pif ON pif.suppliers_id=fod.suppliers_id
+			left join product_new p on pif.hs_code = p.hs_code
+			WHERE fod.mudi_district_did = #{did}
+			AND p.id = #{pid}
+			AND  fod.originer_country_id is not null 
+			GROUP BY fod.originer_country_id
+			ORDER BY value DESC LIMIT 0,10
+		</if>
+		<if test="ietype==1">
+			SELECT 
+				fod.mudi_district_did did,mudi_country dname,
+				<if test="vwtype==0">
+					sum(pif.total_volume) value 
+				</if>
+				<if test="vwtype==1">
+					sum(pif.total_weight) value
+				</if>
+			FROM 
+				frankly_oredr fod
+			LEFT JOIN frankly_oredr pif ON pif.businesses_id=fod.businesses_id
+			left join product_new p on pif.hs_code = p.hs_code
+			WHERE 
+				fod.originer_country_id = #{did}
+			AND p.id = #{pid}
+			AND fod.mudi_district_did is not null 
+			GROUP BY fod.mudi_district_did
+			ORDER BY value DESC LIMIT 0,10
+		</if> -->
+		</select>
+		
+		<!-- 产品国家占比 1：（产品按柜重量  国家 排名） -->
+		<select id="findProductProportionAndRanking" parameterType="map" resultType="Map">
+			
+			SELECT 
+			<if test="dlevel == 0">
+				pf.did_level1 did,
+				pf.did_level1_name dname,
+			</if>
+			<if test="dlevel == 1">
+				pf.did_level2 did,
+				pf.did_level2_name dname,
+			</if>
+			<if test="dlevel == 2">
+				pf.did_level3 did,
+				pf.did_level3_name dname,
+			</if>
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pf
+			</if>
+			<if test="ietype==1">
+				suppliers_category_month pf
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY did ORDER BY value DESC 
+			<!-- SELECT 
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 name,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 name,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 name,
+			</if>
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did
+			<if test="vwtype==0">
+				ORDER BY pf.total_volume DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY pf.total_weight DESC 
+			</if> -->
+			
+		</select>
+		
+		<!-- 获取 进口/出口 总 柜量/重量 (辅助接口，帮助计算排名) -->
+		<select id="findProductCount" parameterType="map" resultType="Map">
+			
+			SELECT 
+			<if test="vwtype==0">
+				pf.total_volume value
+			</if>
+			<if test="vwtype==1">
+				pf.total_weight value
+			</if>
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pf
+			</if>
+			<if test="ietype==1">
+				suppliers_category_month pf
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			
+			<!-- SELECT 
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if> -->
+		</select>
+		
+		<!-- 进口/出口 产品Top5省份排名 柜量/重量 -->
+		<select id="findProductTop5" parameterType="com.gls.pojo.ProductParam" resultType="Map">
+			
+			SELECT 
+			<if test="dlevel == 0">
+				pf.did_level1 did,
+				pf.did_level1_name dname,
+			</if>
+			<if test="dlevel == 1">
+				pf.did_level2 did,
+				pf.did_level2_name dname,
+			</if>
+			<if test="dlevel == 2">
+				pf.did_level3 did,
+				pf.did_level3_name dname,
+			</if>
+			<if test="vwtype==0">
+				sum(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				sum(pf.total_weight) value
+			</if>
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pn
+			</if>
+			<if test="ietype==1">
+				suppliers_category_month pn
+			</if>
+			WHERE pn.category_level2_id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY did
+			ORDER BY value DESC LIMIT 0,5
+			
+			<!-- SELECT 
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 dname,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 dname,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 dname,
+			</if>
+			<if test="vwtype==0">
+				pf.total_volume value
+			</if>
+			<if test="vwtype==1">
+				pf.total_weight value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	 
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND ad.category_level1_id = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND ad.category_level2_id = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND ad.category_level3_id = #{did} 
+				</if>
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did
+			ORDER BY value DESC LIMIT 0,5 -->
+			
+			
+		</select>
+		
+		<!-- 进口/出口 产品省份比重 柜量/重量 -->
+		<select id="findProductProvince" parameterType="map" resultType="Map">
+			
+			SELECT 
+			<if test="dlevel == 0">
+				pf.did_level1 did,
+				pf.did_level1_name dname,
+			</if>
+			<if test="dlevel == 1">
+				pf.did_level2 did,
+				pf.did_level2_name dname,
+			</if>
+			<if test="dlevel == 2">
+				pf.did_level3 did,
+				pf.did_level3_name dname,
+			</if>
+			<if test="vwtype==0">
+				sum(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				sum(pf.total_weight) value
+			</if>
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pf
+			</if>
+			<if test="ietype==1">
+				suppliers_category_month pf
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY did ORDER BY value DESC 
+			
+			<!-- SELECT 
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 dname,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 dname,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 dname,
+			</if>
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did
+			<if test="vwtype==0">
+				ORDER BY pf.total_volume DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY pf.total_weight DESC 
+			</if> -->
+			
+		</select>
+		
+		<!-- Top5省份 进口/出口 产品趋势 (获取地区的id)-->
+		<select id="findTop5ProvinceTrend" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductSupplierTrend">
+			<!-- SELECT 
+			<if test="ietype==0">
+				DATE_FORMAT(b.update_time,'%Y-%m') as yearMonth ,
+			</if>
+			<if test="ietype==1">
+				DATE_FORMAT(s.update_time,'%Y-%m') as yearMonth ,
+			</if>	
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+				LEFT JOIN businesses_district bd ON bd.businesses_id=b.id
+				LEFT JOIN district d ON d.did=bd.district_did
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers s ON pf.suppliers_id = s.id	 
+				LEFT JOIN suppliers_district sd ON sd.suppliers_id=s.id
+				LEFT JOIN district d ON d.did=sd.district_did
+			</if>
+			WHERE p.category_level3_id = #{cid} 
+			<if test="did !=null and did !=0 ">  	
+				AND d.did=#{did}
+			</if>
+			<if test="did=null sor did==0 or did=''">  	
+				AND d.level=1	
+			</if>
+			<if test="vwtype==0">
+				ORDER BY pf.total_volume DESC LIMIT 0,5
+			</if>
+			<if test="vwtype==1">
+				ORDER BY pf.total_weight DESC LIMIT 0,5
+			</if>
+			<if test="ietype==0">
+				GROUP BY DATE_FORMAT(b.update_time,'%Y-%m') 
+			</if>
+			<if test="ietype==1">
+				GROUP BY DATE_FORMAT(s.update_time,'%Y-%m')
+			</if> -->
+			<!-- SELECT
+			<if test="dlevel == 0">
+				b.did_level1 did,
+				b.dname_level1 name,
+			</if>
+			<if test="dlevel == 1">
+				b.did_level2 did,
+				b.dname_level2 name,
+			</if>
+			<if test="dlevel == 2">
+				b.did_level3 did,
+				b.dname_level3 name,
+			</if>
+			FROM 
+			product_new p LEFT JOIN frankly_oredr pf ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = s.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did !=null and did !=0 ">  	
+				AND d.pid = #{did}
+			</if>
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did} AND b.did_level2 > 0
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did} AND b.did_level3 > 0
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			<if test="did==0">
+				AND b.did_level1 > 0
+			</if>
+			GROUP BY did
+			<if test="vwtype==0">
+				ORDER BY SUM(pf.total_volume) DESC LIMIT 0,5
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(pf.total_weight) DESC LIMIT 0,5
+			</if> -->
+			
+			SELECT
+			<if test="dlevel == 0">
+				pf.did_level1 did,
+				pf.did_level1_name dname,
+			</if>
+			<if test="dlevel == 1">
+				pf.did_level2 did,
+				pf.did_level2_name dname,
+			</if>
+			<if test="dlevel == 2">
+				pf.did_level3 did,
+				pf.did_level3_name dname,
+			</if>
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pf
+			</if>
+			<if test="ietype==1">
+				suppliers_cateogry_month pf
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY did ORDER BY value DESC LIMIT 0,5
+			
+			
+		</select>
+		<!--辅助接口： Top5省份 进口/出口 产品趋势 (获取相应的 柜重量和时间段)-->
+		<select id="findTop5ProvinceTrend2" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.Trend">
+			
+			SELECT 
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			,pf.frankly_time yearMonth
+			FROM 
+			<if test="ietype==0">
+				businesses_category_month pf
+			</if>
+			<if test="ietype==1">
+				suppliers_category_month pf	
+			</if>
+			WHERE pf.category_level2_id = #{pid} 
+			<if test="did!=0">
+					<if test="dlevel == 1">
+					AND pf.did_level1 = #{did}
+				</if>
+				<if test="dlevel == 2">
+					AND pf.did_level2 = #{did}
+				</if>
+				<if test="dlevel == 3">
+					AND pf.did_level3 = #{did} 
+				</if>
+			</if>
+			GROUP BY yearMonth
+			
+			<!-- SELECT 
+			<if test="vwtype==0">
+				SUM(pf.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(pf.total_weight) value
+			</if>
+			,DATE_FORMAT(pf.frankly_time ,'%Y-%m') yearMonth
+			FROM frankly_oredr pf
+			LEFT JOIN product_new p ON p.hs_code = pf.hs_code
+			<if test="ietype==0">
+				LEFT JOIN businesses b ON pf.businesses_id = b.id
+			</if>
+			<if test="ietype==1">
+				LEFT JOIN suppliers b ON pf.suppliers_id = b.id	
+			</if>
+			WHERE p.id = #{pid} 
+			<if test="did!=0">
+				<if test="dlevel == 1">
+					AND b.did_level1=#{did}
+				</if>
+				<if test="dlevel == 2">
+					AND b.did_level2=#{did}
+				</if>
+				<if test="dlevel == 3">
+					AND b.did_level3=#{did} 
+				</if>
+			</if>
+			GROUP BY yearMonth -->
+		</select>
+		<!--获取地区分类 -->
+		<select id="findDistrict1" resultType="com.gls.pojo.District">
+			SELECT did,dname title,dname_en dnameEn,level FROM district  WHERE level =0 ORDER BY did DESC 
+		</select>
+		
+		<!-- 获取地区其他分类 -->
+		<select id="findDistrict2" parameterType="Integer" resultType="com.gls.pojo.District" useCache="true">
+			SELECT did,dname title,dname_en dnameEn,level FROM district  WHERE pid =#{did}
+		</select>
+		
+		<!-- 地图信息 -->
+		<select id="findMapInfo" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.MapInfo" useCache="true" >
+			
+			SELECT did,name,SUM(value) value,longitude,latitude FROM(
+				SELECT 
+					d.did,d.dname_en name,count(DISTINCT b.id) value,d.longitude,d.latitude 
+				FROM 
+					district d 
+					
+				LEFT JOIN 
+					<if test="ietype==0">
+					businesses b 
+					</if>
+					<if test="ietype==1">
+					suppliers b 
+					</if>
+					<if test=" dlevel == 0 ">
+					on d.did = b.did_level1 
+					</if>
+					<if test=" dlevel == 1 ">
+					on d.did = b.did_level2
+					</if>
+					<if test=" dlevel == 2 ">
+					on d.did = b.did_level3
+					</if>
+					<if test="cid !=0">
+					LEFT JOIN 
+						frankly_oredr pif ON b.id=pif.businesses_id
+					LEFT JOIN 
+						product_new p ON pif.hs_code=p.hs_code
+					</if>
+				WHERE  1=1
+				<if test=" did == 0 ">
+					and d.level = 1
+				</if>
+				<if test=" did != 0 ">
+					<if test=" dlevel == 1 ">
+					and d.level = 2
+					and b.did_level1 = #{did}
+					</if>
+					<if test=" dlevel == 2 ">
+					and d.level = 3
+					and b.did_level2 = #{did}
+					</if>
+				</if>
+				<if test="cid !=0">
+					<if test="clevel==1">
+						AND p.category_level1_id=#{cid}
+					</if>
+					<if test="clevel==2">
+						AND p.category_level2_id=#{cid}
+					</if>
+					<if test="clevel==3">
+						AND p.category_level3_id=#{cid}
+					</if>
+				</if>
+				GROUP BY b.id
+			)d where value >0 and longitude !=0
+			GROUP BY d.did
+			ORDER BY value DESC	
+			
+		</select>
+		
+		<!-- 地图信息辅助接口获取相关联的国家 -->
+		<select id="findMapRelation" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.MapInfo" useCache="true" >
+			<if test="ietype==0">
+			<!-- SELECT * FROM (
+			SELECT
+				<if test="vwtype==0">
+					COUNT(f.businesses_name) value, 
+				</if>
+				<if test="vwtype==1">
+					COUNT(f.suppliers_name) value
+				</if>
+				c.PortLocation name,
+				d.longitude,
+				d.latitude,
+				d.did
+			FROM
+				frankly_oredr f
+			LEFT JOIN countryportmessage c ON f.qiyun_prot_id = c.Id
+			LEFT JOIN district d ON c.PortLocation = d.dname
+			WHERE
+				f.mudi_district_did = #{did}
+			GROUP BY
+				f.businesses_name	
+			) a
+			where  a.longitude !=0
+			GROUP BY a.name
+			ORDER BY value DESC	 -->
+<!-- 			select d.did did, d.dname_en name,count(1) value,d.longitude,d.latitude from suppliers b  -->
+<!-- 			left join suppliers_district bd on b.id = bd.suppliers_id  -->
+<!-- 			left join district d on bd.district_did = d.did  -->
+<!-- 			where bd.district_level = 1  -->
+<!-- 			and d.longitude !=0 -->
+<!-- 			group by d.dname -->
+			
+			select d2.did,d2.dname_en name,d2.longitude,d2.latitude,count(DISTINCT fod.suppliers_id) value
+			from frankly_oredr fod
+			left join businesses bd on fod.businesses_id = bd.id 
+			left join district d on bd.did_level1 = d.did 
+			left join suppliers bd2 on fod.suppliers_id = bd2.id 
+			left join district d2 on bd2.did_level1 = d2.did 
+			where  d2.did > 0 and  d.did = #{did} and d2.did != #{did}
+			and d2.longitude !=0
+			group by d2.did
+			</if>
+			<if test="ietype==1">
+			<!-- SELECT 
+				a.value,
+				b.longitude,
+				b.latitude,
+				b.dname,
+				b.did
+			 from 
+			(SELECT
+				<if test="vwtype==0">
+					COUNT(f.businesses_name) value, 
+				</if>
+				<if test="vwtype==1">
+					COUNT(f.suppliers_name) value
+				</if>
+				d.dname,
+				d.longitude,
+				d.latitude,
+				d.did,
+				c.PortLocation
+			FROM
+				frankly_oredr f
+			LEFT JOIN district d ON f.mudi_district_did = d.did
+			LEFT JOIN countryportmessage c on f.qiyun_prot_id=c.id
+			WHERE f.mudi_district_did=#{did}
+			GROUP BY c.PortLocation) a LEFT JOIN district b on a.PortLocation=b.dname -->
+<!-- 			select d.did did, d.dname_en name,count(1) value,d.longitude,d.latitude from suppliers b  -->
+<!-- 			left join suppliers_district bd on b.id = bd.suppliers_id  -->
+<!-- 			left join district d on bd.district_did = d.did  -->
+<!-- 			where bd.district_level = 1  -->
+<!-- 			and d.longitude !=0 -->
+<!-- 			group by d.dname -->
+			
+			select d.did did, d.dname_en name,d.longitude,d.latitude,
+			count(DISTINCT fod.businesses_id) value
+			from frankly_oredr fod 
+			left join businesses bd on fod.businesses_id  = bd.id 
+			left join district d on bd.did_level1 = d.did 
+			left join suppliers bd2 on fod.suppliers_id = bd2.id
+			left join district d2 on bd2.did_level1 = d2.did
+			where  d.did > 0 and d.level = 1  and d2.did = #{did} and d.did != #{did}
+			and d2.longitude != 0
+			group by d.did
+		</if>
+
+		</select>
+		
+		<!-- 地图信息辅助接口，获取点击地图的具体国家信息 -->
+		<select id="findMapClickInfo" parameterType="Integer" resultType="com.gls.pojo.MapClickInfo"  >
+			select did,dname_en title,longitude,latitude from district where did=#{did}
+		</select>
+		
+		<!-- 采购商/供应商 信息 -->
+		<select id="findBusinessInfo" parameterType="com.gls.pojo.ProductParam" resultType="Map" >
+			SELECT 
+			origin_name name,link_phone,details_address,logo_url,url,dname_level1,dname_level3,data_flag,CONCAT(dname_level1,'/',dname_level3) as dname
+			FROM 
+			<if test="ietype==0">
+				businesses b 
+			</if>
+			<if test="ietype==1">
+				suppliers b 
+			</if> 
+			WHERE 
+			b.id=#{shangJiaId}
+		</select>
+		<select id="findBusinessInfoPid" parameterType="com.gls.pojo.ProductParam" resultType="int" >
+			SELECT
+				p.id
+			FROM
+				frankly_oredr f left join product_new p on p.hs_code=f.hs_code
+			WHERE
+			<if test="ietype==0">
+				f.businesses_id = #{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				f.suppliers_id = #{shangJiaId}
+			</if>
+			order by frankly_time desc limit 1
+		</select>
+		
+		<!-- 采购产品比重 -->
+		<select id="findBusinessProportion1" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.BusinessProportion">
+			SELECT p.id pid,p.name name,
+			<if test="vwtype==0">
+				SUM(pi.total_volume) value 
+			</if>
+			<if test="vwtype==1">
+				SUM(pi.total_weight) value 
+			</if>
+			FROM frankly_oredr pi inner join product_new p on pi.hs_code=p.hs_code
+			WHERE 
+			<if test="ietype==0">
+				pi.businesses_id=#{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				pi.suppliers_id=#{shangJiaId}
+			</if>
+			GROUP BY p.id order by value desc
+	<!--limit 1,50-->
+</select>
+<!-- 辅助接口：采购产品比重（计算产品总量） -->
+		<select id="findBusinessProportion2" parameterType="com.gls.pojo.ProductParam" resultType="Double">
+			SELECT 
+			<if test="vwtype==0">
+				SUM(total_volume) value 
+			</if>
+			<if test="vwtype==1">
+				SUM(total_weight) value 
+			</if>
+			FROM frankly_oredr 
+			WHERE 
+			<if test="ietype==0">
+				businesses_id=#{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				suppliers_id=#{shangJiaId}
+			</if>
+		</select>
+		<!-- 公司联系人 查询 单条 -->
+		<select id="findContactsById" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductParam">
+			SELECT 
+			id,name,position,data_emp_id empId,data_com_guid as guid,data_emp_guid as empGuid,email,mobile as linkPhone 
+			FROM contact 
+			where id=#{id}
+		</select>
+		<!-- 公司联系人列表 -->
+		<select id="findContacts" parameterType="com.gls.pojo.ProductParam" resultType="Map">
+			SELECT 
+			id,name,sex,depar_name,position,birthday,email,mobile,tel_phone,other_link,country,city
+			FROM contact 
+			WHERE 
+			<if test="ietype==0">
+				businesses_id=#{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				suppliers_id=#{shangJiaId}
+			</if>
+			<if test="guid != '' and guid != null">
+				and data_com_guid=#{guid}
+			</if>
+			limit #{pageNo},#{pageSize}
+		</select>
+		<select id="findContactsCount" parameterType="com.gls.pojo.ProductParam" resultType="int">
+			SELECT count(1) FROM contact 
+			WHERE 
+			<if test="ietype==0">
+				businesses_id=#{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				suppliers_id=#{shangJiaId}
+			</if>
+			<if test="guid !='' and guid != null">
+				and data_com_guid=#{guid}
+			</if>
+		</select>
+		<!-- 修改公司联系人列表 -->
+		<update id="updateContacts" parameterType="com.gls.pojo.ProductParam">
+			
+			update 
+			  contact
+			set
+			mobile = #{linkPhone},email = #{email}
+			where id=#{id}
+		</update>
+		<!-- 修改供应商或者采购商的公司网址和联系电话列表 -->
+		<update id="updateBusinessInfo" parameterType="com.gls.pojo.ProductParam">
+			
+			update 
+			<if test="ietype==0">
+				businesses
+			</if>
+			<if test="ietype==1">
+				suppliers
+			</if>
+			set
+			<if test="linkPhone != null">
+			link_phone = #{linkPhone},
+			</if>
+			<if test="url != null">
+			url = #{url},
+			</if>
+			data_flag = 1,
+			data_id = #{dataId},
+			data_name = #{dataName}
+			where id=#{shangJiaId}
+		</update>
+		
+		<insert id="insertContact">
+		
+			insert into contact(
+			<if test="ietype == 0">
+				businesses_id,
+			</if>
+			<if test="ietype == 1">
+				suppliers_id,
+			</if>
+			name,position,data_emp_id,data_com_guid,data_emp_guid,last_time,country,city
+			) values(#{shangJiaId},#{name},#{position},#{dataEmpId},#{dataComGuid},#{dataEmpGuid},#{lastTime},#{country},#{city})
+		</insert>
+		
+		
+		<!-- 详情页 供应商/采购商趋势 -->
+		<select id="findBusinessTrendName" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductSupplierTrend">
+			<!-- SELECT 
+			<if test="ietype==1">
+				suppliers_id id,suppliers_name name  
+			</if>
+			<if test="ietype==0">
+				businesses_id id,businesses_name name
+			</if>
+			FROM frankly_oredr 
+			WHERE 1=1
+			 <if test="pid!=0">
+				AND	product_id=#{pid}
+			</if> 
+			<if test="ietype==0">
+				AND businesses_id=#{shangJiaId}
+				AND suppliers_id !=0
+				GROUP BY businesses_id
+			</if>
+			<if test="ietype==1">
+				AND suppliers_id=#{shangJiaId}
+				AND businesses_id !=0
+				GROUP BY suppliers_id
+			</if>
+			<if test="vwtype==0">
+				ORDER BY SUM(volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(weight) DESC
+			</if>
+			LIMIT 0,10
+			 -->
+			SELECT 
+				distinct b.id,b.name  
+			FROM 
+			<if test="ietype==0">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			<if test="ietype==1">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			left join product_new p on fo.hs_code = p.hs_code
+			WHERE 
+			b.id=#{shangJiaId}
+			 <if test="pid>0"> 
+				AND p.id=#{pid}
+			</if> 
+			
+		</select>
+		<select id="findBusinessTrendInfo" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductSupplierTrend">
+			<!-- SELECT 
+			<if test="ietype==1">
+				suppliers_id id,suppliers_name name  
+			</if>
+			<if test="ietype==0">
+				businesses_id id,businesses_name name
+			</if>
+			FROM frankly_oredr 
+			WHERE 1=1
+			 <if test="pid!=0">
+				AND	product_id=#{pid}
+			</if> 
+			<if test="ietype==0">
+				AND businesses_id=#{shangJiaId}
+				AND suppliers_id !=0
+				GROUP BY businesses_id
+			</if>
+			<if test="ietype==1">
+				AND suppliers_id=#{shangJiaId}
+				AND businesses_id !=0
+				GROUP BY suppliers_id
+			</if>
+			<if test="vwtype==0">
+				ORDER BY SUM(volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(weight) DESC
+			</if>
+			LIMIT 0,10
+			 -->
+			SELECT 
+				distinct b.id,b.name  
+			FROM 
+			<if test="ietype==0">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			left join product_new p on fo.hs_code = p.hs_code
+			WHERE 
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId}
+				AND fo.suppliers_id !=0
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId}
+				AND fo.businesses_id !=0
+			</if>
+			 <if test="pid>0"> 
+				AND p.id=#{pid}
+			</if> 
+			<if test="ietype==0">
+				GROUP BY fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				GROUP BY fo.businesses_id
+			</if>	
+			<if test="vwtype==0">
+				ORDER BY SUM(fo.total_volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(fo.total_weight) DESC
+			</if>
+			LIMIT 0,10
+			
+			
+		</select>
+		<!-- （辅助接口）详情页 供应商/采购商趋势 -->
+		<select id="findBusinessTrendInfo2" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.Trend">
+			SELECT  
+			<if test="vwtype==0">
+				SUM(fo.total_volume) value
+			</if>
+			<if test="vwtype==1">
+				SUM(fo.fact_weight) value
+			</if>
+			,DATE_FORMAT(fo.frankly_time,'%Y-%m') yearMonth
+			FROM 
+			<if test="ietype==0">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			<if test="ietype==1">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			left join product_new p on fo.hs_code = p.hs_code
+			WHERE 
+			b.id=#{shangJiaId}
+			<if test="pid>0"> 
+				AND p.id=#{pid}
+			</if>
+			GROUP BY DATE_FORMAT(fo.frankly_time,'%Y-%m')
+		</select>
+		
+		<!-- 合作伙伴关系图 -->
+		<select id="findRelationGraph" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.RelationGraph">
+			SELECT 
+				id,origin_name name  
+			FROM 
+			<if test="ietype==0">
+				businesses 
+			</if>
+			<if test="ietype==1">
+				suppliers
+			</if>
+			WHERE id=#{shangJiaId}
+		</select>
+		<!-- （辅助接口：一级）合作伙伴关系图 -->
+		<select id="findRelationGraph1" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.RelationGraph">
+			SELECT 
+				distinct b.id,b.origin_name name  
+			FROM 
+			<if test="ietype==0">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			<if test="pid > 0">
+				left join product_new p on fo.hs_code = p.hs_code
+			</if>
+			WHERE 
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId}
+				AND fo.suppliers_id !=0
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId}
+				AND fo.businesses_id !=0
+			</if>
+			<if test="pid > 0">
+				AND p.id=#{pid}
+			</if>
+			<if test="ietype==0">
+				GROUP BY fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				GROUP BY fo.businesses_id
+			</if>
+			<!--
+			<if test="vwtype==0">
+				ORDER BY SUM(fo.total_volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(fo.fact_weight) DESC
+			</if>
+			-->
+			ORDER BY count(1) DESC
+			LIMIT 0,10
+			
+			<!-- SELECT 
+				suppliers_id id,suppliers_name name  
+			FROM frankly_oredr 
+			WHERE 
+				businesses_id=#{shangJiaId}
+				AND suppliers_id !=0
+				GROUP BY suppliers_id
+				ORDER BY SUM(volume) DESC 
+			LIMIT 0,10 -->
+			
+		</select>
+		<!-- （辅助接口：二级）合作伙伴关系图 -->
+		<select id="findRelationGraph2" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.RelationGraph">
+			SELECT 
+			<if test="ietype==1">
+				suppliers_id id,suppliers_name name  <!-- 传采购商id时找供应商 -->
+			</if>
+			<if test="ietype==0">
+				businesses_id id,businesses_name name
+			</if>
+			FROM frankly_oredr 
+			WHERE 
+			<if test="ietype==1">
+				businesses_id=#{shangJiaId}
+				AND suppliers_id !=0
+				GROUP BY suppliers_id
+			</if>
+			<if test="ietype==0">
+				suppliers_id=#{shangJiaId}
+				AND businesses_id !=0
+				GROUP BY businesses_id
+			</if>
+			<if test="vwtype==0">
+				ORDER BY SUM(total_volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(total_weight) DESC
+			</if>
+			LIMIT 0,10
+		</select>
+		<!-- （辅助接口：三级）合作伙伴关系图 -->
+		<select id="findRelationGraph3" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.RelationGraph">
+			SELECT 
+			<if test="ietype==0">
+				suppliers_id id,suppliers_name name  <!-- 传采购商id时找供应商 -->
+			</if>
+			<if test="ietype==1">
+				businesses_id id,businesses_name name
+			</if>
+			FROM frankly_oredr 
+			WHERE 
+			<if test="ietype==0">
+				businesses_id=#{shangJiaId}
+				AND suppliers_id !=0
+				GROUP BY suppliers_id
+			</if>
+			<if test="ietype==1">
+				suppliers_id=#{shangJiaId}
+				AND businesses_id !=0
+				GROUP BY businesses_id
+			</if>
+			<if test="vwtype==0">
+				ORDER BY SUM(total_volume) DESC 
+			</if>
+			<if test="vwtype==1">
+				ORDER BY SUM(total_weight) DESC
+			</if>
+			LIMIT 0,10
+		</select>
+		
+		<!-- 近一年的交易历史 -->
+		<select id="findRecentTransaction" parameterType="com.gls.pojo.ProductParam" resultType="Map">
+			SELECT 
+				b.id,b.origin_name name,b.last_product_desc as pname,count(distinct fo.id) count,sum(fo.total_volume) volume,fo.fact_weight weight,DATE_FORMAT(b.last_date,'%Y-%m-%d') yearMonth,
+				b.dname_level1 address
+			FROM 
+			<if test="ietype==0">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			<if test="pid > 0">
+				left join product_new p on fo.hs_code = p.hs_code
+			</if>
+			WHERE
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId} <if test="pid > 0"> AND p.id=#{pid} </if>
+				<!-- AND DATE_FORMAT(s.last_date,'%Y-%m') >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)  数据库数据暂时为空，有数据后再放出来-->
+				AND fo.suppliers_id !=0
+				GROUP BY fo.suppliers_id
+				
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId} <if test="pid > 0"> AND p.id=#{pid} </if>
+				<!-- AND DATE_FORMAT(b.last_date,'%Y-%m') >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)  -->
+				AND fo.suppliers_id !=0
+				GROUP BY fo.businesses_id
+			</if>
+
+				${orderby} limit #{pageNo},#{pageSize}
+			
+		</select>
+		<!-- 近一年的交易历史 -->
+		<select id="findRecentTransactionCount" parameterType="com.gls.pojo.ProductParam" resultType="int">
+			SELECT 
+				<if test="ietype==0">
+				count(distinct fo.suppliers_id)
+				</if>
+				<if test="ietype==1">
+				count(distinct fo.businesses_id)
+				</if>
+			FROM 
+			<if test="ietype==0">
+				suppliers b left join frankly_oredr fo on b.id = fo.suppliers_id
+			</if>
+			<if test="ietype==1">
+				businesses b left join frankly_oredr fo on b.id = fo.businesses_id
+			</if>
+			<if test="pid > 0">
+				left join product_new p on fo.hs_code = p.hs_code
+			</if>
+			WHERE 
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId}
+				<!-- AND DATE_FORMAT(s.last_date,'%Y-%m') >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)  数据库数据暂时为空，有数据后再放出来-->
+				AND fo.suppliers_id !=0
+				
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId}
+				<!-- AND DATE_FORMAT(b.last_date,'%Y-%m') >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)  -->
+				AND fo.suppliers_id !=0
+			</if>
+			<if test="pid > 0">
+				AND p.id=#{pid}
+			</if>
+		</select>
+		<!-- 与xxx供应商的交易情况 -->
+		<select id="findTransactionInfo" parameterType="com.gls.pojo.ProductParam" resultType="Map">
+			SELECT fo.id,
+			fo.frankly_code,fo.product_description,fo.qiyun_prot_name,fo.mudi_prot_name,fo.total_volume,DATE_FORMAT(fo.frankly_time,'%Y-%m-%d') yearMonth
+			FROM frankly_oredr fo left join product_new p on fo.hs_code = p.hs_code
+			WHERE 
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId}
+				<if test="shangJiaId2 > 0">
+					and fo.suppliers_id=#{shangJiaId2}
+				</if>
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId}
+				<if test="shangJiaId2 > 0">
+					and fo.businesses_id=#{shangJiaId2}
+				</if>
+			</if>
+			<if test="pid > 0">
+				AND p.id=#{pid}
+			</if>
+			ORDER BY yearMonth DESC LIMIT #{pageNo},#{pageSize}
+		</select>
+		<!-- 与xxx供应商的交易情况 -->
+		<select id="findTransactionInfoCount" parameterType="com.gls.pojo.ProductParam" resultType="int">
+			SELECT 
+			count(1)
+			FROM frankly_oredr fo left join product_new p on fo.hs_code = p.hs_code
+			WHERE 
+			<if test="ietype==0">
+				fo.businesses_id=#{shangJiaId}
+				<if test="shangJiaId2 > 0">
+					and fo.suppliers_id=#{shangJiaId2}
+				</if>
+			</if>
+			<if test="ietype==1">
+				fo.suppliers_id=#{shangJiaId}
+				<if test="shangJiaId2 > 0">
+					and fo.businesses_id=#{shangJiaId2}
+				</if>
+			</if>
+			<if test="pid > 0">
+				AND p.id=#{pid}
+			</if>
+		</select>
+		
+		<!-- 竞争对手进出口趋势图 -->
+		<select id="findCompete" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.ProductSupplierTrend">
+			SELECT
+			<if test="ietype==0">
+				businesses_id id,businesses_name name
+			</if>
+			<if test="ietype==1">
+				suppliers_id id,suppliers_name name
+			</if>
+			FROM frankly_oredr 
+			WHERE 
+			product_id=#{pid}
+			<if test="ietype==0">
+				AND businesses_id is not null 
+				AND businesses_id !=#{shangJiaId}
+			</if>
+			<if test="ietype==1">
+				AND suppliers_id is not null 
+				AND suppliers_id !=#{shangJiaId}
+			</if>
+			<if test="vwtype==0">
+				ORDER BY volume DESC LIMIT 0,10
+			</if>
+			<if test="vwtype==1">
+				ORDER BY weights DESC LIMIT 0,10
+			</if>
+			
+		</select>
+		
+		<!-- 核心采购商/供应商地区分布图   大写的文号，不知道写的什么 要改 ，暂时处理下-->
+		<select id="findbusinessDistribution" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.MapInfo">
+			SELECT 
+				d.dname_en name, 1 as value,
+			 d.did,d.longitude,d.latitude
+			FROM 
+			<if test="ietype==0">
+				businesses b
+			</if>
+			<if test="ietype==1">
+				suppliers b
+			</if>
+			left join district d on b.did_level1 = d.did
+			WHERE b.id=#{shangJiaId}
+			AND longitude!=0
+			
+		</select>
+		<select id="findbusinessDistributionByIds" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.MapInfo">
+			SELECT 
+				d.dname_en name, count(b.id) as value,
+			 d.did,d.longitude,d.latitude
+			FROM 
+			<if test="ietype==0">
+				businesses b
+			</if>
+			<if test="ietype==1">
+				suppliers b
+			</if>
+			left join district d on b.did_level1 = d.did
+			WHERE b.id in 
+			(
+				${shangJiaIds}
+			)
+			AND longitude!=0
+			group by d.did
+		</select>
+		
+		<!-- 交易清单 -->
+		<select id="findTransactionDetailed" parameterType="com.gls.pojo.ProductParam" resultType="com.gls.pojo.TransactionDetailed">
+			<if test="ietype==1">
+			SELECT 
+				fod.businesses_id id,fod.businesses_name name,p.name productName,
+				COUNT(fod.businesses_id) count,SUM(fod.total_volume) totalVolume,SUM(fod.total_weight) totalweight,
+				DATE_FORMAT(fod.frankly_time,'%Y-%m') latelyDate
+			FROM 
+				frankly_oredr fod
+			LEFT JOIN product_new p on fod.hs_code = p.hs_code
+			WHERE 
+				fod.suppliers_id=#{shangJiaId}
+			AND p.name is NOT NULL
+				<if test="pid > 0">
+					AND p.=#{pid}
+				</if>
+			GROUP BY 
+				p.name limit #{pageNo},#{pageSize}
+			</if>
+			<if test="ietype==0">
+			SELECT 
+				fod.suppliers_id id,fod.suppliers_name name,p.name productName,
+				COUNT(fod.suppliers_id) count,SUM(fod.total_volume) totalVolume,SUM(fod.total_weight) totalweight,
+				DATE_FORMAT(fod.frankly_time,'%Y-%m') latelyDate
+			FROM 
+				frankly_oredr fod
+			LEFT JOIN product_new p on fod.hs_code = p.hs_code
+			WHERE 
+				fod.businesses_id=#{shangJiaId}
+			AND p.name is NOT NULL
+				<if test="pid > 0">
+					AND p.product_id=#{pid}
+				</if>
+			GROUP BY 
+				p.name limit #{pageNo},#{pageSize}
+			</if>
+		</select>
+		
+		<select id="findProByStr" parameterType="String" resultType="Map">
+		SELECT * from product_new where name like #{str};
+		</select>
+		
+	</mapper>

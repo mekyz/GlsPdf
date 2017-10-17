@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.gls.dao.mapper.PhoneMessageUsersMapper">
+  <resultMap id="BaseResultMap" type="com.gls.pojo.PhoneMessageUsers">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="user_name" jdbcType="VARCHAR" property="userName" />
+    <result column="gender" jdbcType="VARCHAR" property="gender" />
+    <result column="mobilephone" jdbcType="BIGINT" property="mobilephone" />
+    <result column="send_time" jdbcType="TIMESTAMP" property="sendTime" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="is_deleted" jdbcType="TINYINT" property="isDeleted" />
+  </resultMap>
+	
+  <insert id="insert" parameterType="com.gls.pojo.PhoneMessageUsers" useGeneratedKeys="true">
+    insert into phone_message_users ( user_name, gender, mobilephone,  create_time)
+    values 
+    	<foreach collection="list" item="item" index="index" separator=",">
+   	 (#{item.userName}, #{item.gender},#{item.mobilephone}, NOW())
+	</foreach>
+  </insert>
+ 
+   <select id="getMobilephone_List" resultMap="BaseResultMap">
+   	select mobilephone,gender,user_name from phone_message_users
+   </select>
+</mapper>
